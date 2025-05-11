@@ -1,4 +1,4 @@
-# 26 April 20205
+# 10 May 20205
 
 
 # Install required packages if needed
@@ -16,13 +16,13 @@ library(spatialreg)
 # Code for importing the data (adjust as needed)
 housing_pharm_prep <- read_csv("housing_pharm_prep.csv")
 view(housing_pharm_prep) #extracted from ArcGIS online; from Sean, and has lots of data from MSTUDY
-## including, where people live, whether they're experiencing housing insecurity [homelessness], and whether 
+## including, education, and whether 
 ## they live within 1 mile of a pharmacy
 
 # Explore the data structure
 head(housing_pharm_prep)
 
-## column for housing insecurity (is_homeles)
+## column for education level (education)
 ## column for access to pharmacy (within1mile)
 
 # Clean the data - ensure housing insecurity and access are properly formatted
@@ -30,10 +30,7 @@ head(housing_pharm_prep)
 # This assumes your columns are named something like "housing_insecurity" and "Join_Count"
 # Adjust the column names based on your actual data
 
-table(housing_pharm_prep$is_homeles)
-
-# rename the column from arcgis "Join_Count" that indicated the number of pharmacies within one mile of home
-colnames(housing_pharm_prep)[colnames(housing_pharm_prep) == "Join_Count"] <- "num_pharm_within1mile_home"
+table(housing_pharm_prep$education)
 
 # Create a binary access variable if needed
 # This assumes "Join_Count" > 0 means there is pharmacy access
@@ -43,7 +40,7 @@ housing_pharm_clean <- housing_pharm_prep %>%
 # Basic statistical tests
 
 # Create contingency table
-cont_table <- table(housing_pharm_clean$is_homeles, housing_pharm_clean$has_access)
+cont_table <- table(housing_pharm_clean$education, housing_pharm_clean$has_access)
 print(cont_table)
 
 # Chi-square test to see if there's association between housing insecurity and pharmacy access
@@ -56,7 +53,7 @@ print(fisher_test)
 
 # Summarize results by group
 summary_stats <- housing_pharm_clean %>%
-  group_by(is_homeles) %>%
+  group_by(education) %>%
   summarize(
     total_count = n(),
     with_access = sum(has_access == "Access"),
@@ -65,11 +62,11 @@ summary_stats <- housing_pharm_clean %>%
 print(summary_stats)
 
 # Visualize the results
-ggplot(housing_pharm_clean, aes(x = is_homeles, fill = has_access)) +
+ggplot(housing_pharm_clean, aes(x = education, fill = has_access)) +
   geom_bar(position = "fill") +
   scale_y_continuous(labels = scales::percent) +
-  labs(title = "Pharmacy Accessibility by Housing Insecurity Status",
-       x = "Is Homeless",
+  labs(title = "Pharmacy Accessibility by Education Level",
+       x = "Education",
        y = "Proportion",
        fill = "Pharmacy Access within 1 mile of Home") +
   theme_minimal()
@@ -95,14 +92,14 @@ if(all(c("Lat", "Long") %in% colnames(housing_pharm_clean))) {
   
   # Prepare variables for spatial regression
   data_sf$access_num <- as.numeric(data_sf$has_access == "Access")
-  data_sf$is_homeles <- factor(data_sf$is_homeles)  # <-- keep the column name is_homeles
+  data_sf$is_edu <- factor(data_sf$education)  # <-- keep the column name education
   
   # Run spatial lag model
-  spatial_lag <- lagsarlm(access_num ~ is_homeles, data = data_sf, listw = nb_weights)
+  spatial_lag <- lagsarlm(access_num ~ education, data = data_sf, listw = nb_weights)
   summary(spatial_lag)
   
   # Run spatial error model
-  spatial_error <- errorsarlm(access_num ~ is_homeles, data = data_sf, listw = nb_weights)
+  spatial_error <- errorsarlm(access_num ~ education, data = data_sf, listw = nb_weights)
   summary(spatial_error)
   
   # Compare models
@@ -112,8 +109,8 @@ if(all(c("Lat", "Long") %in% colnames(housing_pharm_clean))) {
   # Map the results
   ggplot() +
     geom_sf(data = data_sf, aes(color = has_access)) +
-    facet_wrap(~ is_homeles) +   # <-- also facet by is_homeles
-    labs(title = "Spatial Distribution of Pharmacy Access by Housing Insecurity Status") +
+    facet_wrap(~ education) +   # <-- also facet by education
+    labs(title = "Spatial Distribution of Pharmacy Access by Education Level") +
     theme_minimal()
 }
 
