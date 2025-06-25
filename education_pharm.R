@@ -1,5 +1,5 @@
 # 10 May 20205
-
+# working on it again, 25 May 2025
 
 # Install required packages if needed
 if (!requireNamespace("tidyverse", quietly = TRUE)) install.packages("tidyverse")
@@ -13,14 +13,9 @@ library(sf)
 library(spdep)
 library(spatialreg)
 
-# Code for importing the data (adjust as needed)
-housing_pharm_prep <- read_csv("housing_pharm_prep.csv")
-view(housing_pharm_prep) #extracted from ArcGIS online; from Sean, and has lots of data from MSTUDY
-## including, education, and whether 
-## they live within 1 mile of a pharmacy
-
 # Explore the data structure
-head(housing_pharm_prep)
+head(housing_pharm_clean)
+view(housing_pharm_clean)
 
 ## column for education level (education)
 ## column for access to pharmacy (within1mile)
@@ -46,10 +41,6 @@ print(cont_table)
 # Chi-square test to see if there's association between housing insecurity and pharmacy access
 chi_test <- chisq.test(cont_table)
 print(chi_test)
-
-# If you have small cell counts, use Fisher's exact test instead
-fisher_test <- fisher.test(cont_table)
-print(fisher_test)
 
 # Summarize results by group
 summary_stats <- housing_pharm_clean %>%
